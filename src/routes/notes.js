@@ -13,10 +13,10 @@ router.post('/notes/new-note', async (req, res) => {
 
  const errors = []
  if (!title) {
-  errors.push({ textToShowInError: 'Please write a Title' })
+  errors.push({ text: 'Please write a Title' })
  }
  if (!description) {
-  errors.push({ textToShowInError: 'please write a description' })
+  errors.push({ text: 'please write a description' })
  }
  if (errors.length > 0) {
   res.render('notes/new-note', {
@@ -31,6 +31,7 @@ router.post('/notes/new-note', async (req, res) => {
   })
   console.log(newNote)
   await newNote.save()
+  req.flash('success_msg', 'Note added succesfully')
   res.redirect('/notes')
  }
 }
@@ -38,13 +39,34 @@ router.post('/notes/new-note', async (req, res) => {
 
 router.get('/notes', async (req, res) => {
 
- const notes = await Note.find()
+ const notes = await Note.find().lean().sort({ date: 'desc' })
 
- res.render()
+ res.render('notes/all-notes', { notes })
 
 })
 
+router.get('/notes/edit/:id', async (req, res) => {
+ console.log(req.params.id)
+ const note = await Note.findById(req.params.id).lean()
 
+ res.render('notes/edit-note', { note })
+})
 
+router.put('/notes/edit-note/:id', async (req, res) => {
+ const { title, description } = req.body
+
+ await Note.findByIdAndUpdate(req.params.id, { title, description })
+
+ req.flash('success_msg', 'Note Updated Succelfuly')
+
+ res.redirect('/notes')
+})
+
+router.delete('/notes/delete/:id', async(req, res) => {
+await Note.findByIdAndDelete(req.params.id)
+req.flash('success_msg', 'Note deleted Succelfuly')
+
+res.redirect('/notes')
+})
 
 module.exports = router
