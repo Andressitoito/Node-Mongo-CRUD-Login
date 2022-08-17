@@ -28,17 +28,21 @@ router.post('/users/signup', async (req, res) => {
  } else {
 
   const emailUser = await User.findOne({ email: email })
-  if(emailUser){
+  if (emailUser) {
+   errors.push({ text: 'El email existe' })
+
    req.flash('error_msg', 'The email is already in use')
-   res.redirect('/users/signup')
+   res.render('users/signup', { errors, name, email, password, confirm_password })
+  } else {
+
+
+   const newUser = new User({ name, email, password })
+   newUser.password = await newUser.encryptPassword(password)
+   await newUser.save()
+   console.log(newUser)
+   req.flash('success_msg', 'You are registered')
+   res.redirect('/users/signin')
   }
-
-  const newUser = new User({ name, email, password })
-  newUser.password = await newUser.encryptPassword(password)
-  await newUser.save()
-
-  req.flash('success_msg', 'You are registered')
-  res.redirect('/users/signup')
 
  }
 })
