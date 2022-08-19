@@ -1,11 +1,17 @@
 const express = require('express')
 const router = express.Router()
-
+const passport = require('passport')
 const User = require('../models/User')
 
 router.get('/users/signin', (req, res) => {
  res.render('users/signin')
 })
+
+router.post('/users/signin', passport.authenticate('local', {
+ successRedirect: '/notes',
+ failureRedirect: '/users/signin',
+ failureFlash: true
+}))
 
 router.get('/users/signup', (req, res) => {
  res.render('users/signup')
@@ -35,17 +41,22 @@ router.post('/users/signup', async (req, res) => {
    res.render('users/signup', { errors, name, email, password, confirm_password })
   } else {
 
-
    const newUser = new User({ name, email, password })
    newUser.password = await newUser.encryptPassword(password)
    await newUser.save()
-   console.log(newUser)
    req.flash('success_msg', 'You are registered')
    res.redirect('/users/signin')
   }
 
  }
 })
+
+router.get('/users/logout', (req, res)=>{
+ req.logOut()
+
+ res.redirect('/')
+})
+
 
 module.exports = router
 
