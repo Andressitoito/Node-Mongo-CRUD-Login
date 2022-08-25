@@ -2,12 +2,13 @@ const express = require('express')
 const router = express.Router()
 
 const Note = require('../models/Note')
+const { isAuthenticated } = require('../helpers/auth')
 
-router.get('/notes/add', (req, res) => {
+router.get('/notes/add', isAuthenticated, (req, res) => {
  res.render('notes/new-note')
 })
 
-router.post('/notes/new-note', async (req, res) => {
+router.post('/notes/new-note', isAuthenticated, async (req, res) => {
  console.log(req.body)
  const { title, description } = req.body
 
@@ -29,7 +30,7 @@ router.post('/notes/new-note', async (req, res) => {
    title,
    description
   })
-  console.log(newNote)
+  newNote.user = req.user.id
   await newNote.save()
   req.flash('success_msg', 'Note added succesfully')
   res.redirect('/notes')
@@ -37,22 +38,22 @@ router.post('/notes/new-note', async (req, res) => {
 }
 )
 
-router.get('/notes', async (req, res) => {
+router.get('/notes', isAuthenticated, async (req, res) => {
 
- const notes = await Note.find().lean().sort({ date: 'desc' })
+ const notes = await Note.find({ user: req.user.id }).lean().sort({ date: 'desc' })
 
  res.render('notes/all-notes', { notes })
 
 })
 
-router.get('/notes/edit/:id', async (req, res) => {
+router.get('/notes/edit/:id', isAuthenticated, async (req, res) => {
  console.log(req.params.id)
  const note = await Note.findById(req.params.id).lean()
 
  res.render('notes/edit-note', { note })
 })
 
-router.put('/notes/edit-note/:id', async (req, res) => {
+router.put('/notes/edit-note/:id', isAuthenticated, async (req, res) => {
  const { title, description } = req.body
 
  await Note.findByIdAndUpdate(req.params.id, { title, description })
@@ -62,11 +63,11 @@ router.put('/notes/edit-note/:id', async (req, res) => {
  res.redirect('/notes')
 })
 
-router.delete('/notes/delete/:id', async(req, res) => {
-await Note.findByIdAndDelete(req.params.id)
-req.flash('success_msg', 'Note deleted Succelfuly')
+router.delete('/notes/delete/:id', isAuthenticated, async (req, res) => {
+ await Note.findByIdAndDelete(req.params.id)
+ req.flash('success_msg', 'Note deleted Succelfuly')
 
-res.redirect('/notes')
+ res.redirect('/notes')
 })
 
 module.exports = router
